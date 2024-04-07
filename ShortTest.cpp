@@ -1,42 +1,39 @@
-#include "ShortTest.h"
-#include "MultiMap.h"
-#include "MultiMapIterator.h"
 #include <assert.h>
-#include <vector>
 #include<iostream>
+#include "SortedMap.h"
+#include "SMIterator.h"
+#include "ShortTest.h"
+#include <exception>
+using namespace std;
 
-void testAll() {
-	MultiMap m;
-	m.add(1, 100);
-	m.add(2, 200);
-	m.add(3, 300);
-	m.add(1, 500);
-	m.add(2, 600);
-	m.add(4, 800);
-
-	assert(m.size() == 6);
-
-	assert(m.remove(5, 600) == false);
-	assert(m.remove(1, 500) == true);
-
-	assert(m.size() == 5);
-
-    vector<TValue> v;
-	v=m.search(6);
-	assert(v.size()==0);
-
-	v=m.search(1);
-	assert(v.size()==1);
-
-	assert(m.isEmpty() == false);
-
-	MultiMapIterator im = m.iterator();
-	assert(im.valid() == true);
-	while (im.valid()) {
-		im.getCurrent();
-		im.next();
+bool relatie1(TKey cheie1, TKey cheie2) {
+	if (cheie1 <= cheie2) {
+		return true;
 	}
-	assert(im.valid() == false);
-	im.first();
-	assert(im.valid() == true);
+	else {
+		return false;
+	}
 }
+
+void testAll(){
+	SortedMap sm(relatie1);
+	assert(sm.size() == 0);
+	assert(sm.isEmpty());
+    sm.add(1,2);
+    assert(sm.size() == 1);
+    assert(!sm.isEmpty());
+    assert(sm.search(1)!=NULL_TVALUE);
+    TValue v =sm.add(1,3);
+    assert(v == 2);
+    assert(sm.search(1) == 3);
+    SMIterator it = sm.iterator();
+    it.first();
+    while (it.valid()){
+    	TElem e = it.getCurrent();
+    	assert(e.second != NULL_TVALUE);
+    	it.next();
+    }
+    assert(sm.remove(1) == 3);
+    assert(sm.isEmpty());
+}
+

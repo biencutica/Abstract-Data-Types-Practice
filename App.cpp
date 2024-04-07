@@ -1,18 +1,20 @@
-#include <iostream>
-#include "MultiMap.h"
 #include "ExtendedTest.h"
 #include "ShortTest.h"
-#include "MultiMapIterator.h"
 
+#include "SortedMap.h"
+
+
+#include <iostream>
 using namespace std;
 
 
 int main() {
-
-
 	testAll();
 	testAllExtended();
-	cout << "End" << endl;
-	system("pause");
 
+	cout << "That's all!" << endl;
+	system("pause");
+	return 0;
 }
+
+

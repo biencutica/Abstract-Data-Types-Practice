@@ -1,368 +1,326 @@
-#include "ShortTest.h"
-#include "MultiMap.h"
-#include "MultiMapIterator.h"
-#include <assert.h>
-#include <iostream>
-#include <stdlib.h>
-#include <vector>
-
 #include <exception>
+#include <assert.h>
+#include <algorithm>
+#include <vector>
+#include <iostream>
+#include "SortedMap.h"
+#include "SMIterator.h"
+#include "ExtendedTest.h"
 
 using namespace std;
 
-void testIteratorSteps(MultiMap& mm) {
-	int count = 0;
-	MultiMapIterator mmit = mm.iterator();
-	while (mmit.valid()) {
-		count++;
-		mmit.next();
+bool increasing(TKey c1, TKey c2) {
+	if (c1 <= c2) {
+		return true;
+	} else {
+		return false;
 	}
-	assert(count == mm.size());
+}
+
+bool decreasing(TKey c1, TKey c2) {
+	if (c1 >= c2) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+void testIteratorSteps(SortedMap& m, Relation r) {
+	SMIterator li = m.iterator();
+	TElem elem = NULL_TPAIR;
+	int count = 0;
+	if (li.valid()) {
+		elem = li.getCurrent();
+		count++;
+		li.next();
+	}
+	while (li.valid()) {
+		TElem elem2 = li.getCurrent();
+		assert(r(elem.first, elem2.first));
+		elem = elem2;
+		count++;
+		li.next();
+	}
+	assert(count == m.size());
 }
 
 void testCreate() {
 	cout << "Test create" << endl;
-	MultiMap m;
-	assert(m.isEmpty() == true);
-	assert(m.size() == 0);
+	SortedMap sm(increasing);
+	assert(sm.size() == 0);
+	assert(sm.isEmpty());
 
-	MultiMapIterator im = m.iterator();
-	assert(im.valid() == false);
+	SMIterator it = sm.iterator();
+	it.first();
+	assert(!it.valid());
+	try {
+		it.next();
+		assert(false);
+	}
+	catch (exception&) {
+		assert(true);
+	}
+	try {
+		it.getCurrent();
+		assert(false);
+	}
+	catch (exception&) {
+		assert(true);
+	}
 
-	for (int i = -10; i < 30; i++) {
-		assert(m.remove(i, i) == false);
+	for (int i = 0; i < 10; i++) {
+		assert(sm.search(i) == NULL_TVALUE);
 	}
-    vector<TValue> v;
-	for (int i = -10; i < 30; i++) {
-            v=m.search(i);
-            assert(v.size()==0);
+
+	for (int i = -10; i < 10; i++) {
+		assert(sm.remove(i) == NULL_TVALUE);
 	}
+}
+
+void testSearch(Relation r) {
+	cout << "Test search" << endl;
+	SortedMap sm(r);
+	int cMin = 0;
+	int cMax = 10;
+	try {
+		for (int i = cMin; i <= cMax; i++) {
+			sm.add(i, i + 1);
+		}
+		assert(true);
+	} catch (exception&) {
+		assert(false);
+	}
+	int intervalDim = 10;
+	for (int i = cMin; i <= cMax; i++) {
+		assert(sm.search(i) == i + 1);
+	}
+	testIteratorSteps(sm, r);
+	for (int i = cMin - intervalDim; i < cMin; i++) {
+		assert(sm.search(i) == NULL_TVALUE);
+	}
+	for (int i = cMax + 1; i < cMax + intervalDim; i++) {
+		assert(sm.search(i) == NULL_TVALUE);
+	}
+}
+
+void testSearch() {
+	testSearch(increasing);
+	testSearch(decreasing);
+}
+
+vector<int> keysInRandomOrder(int cMin, int cMax) {
+	vector<int> keys;
+	for (int c = cMin; c <= cMax; c++) {
+		keys.push_back(c);
+	}
+	int n = keys.size();
+	for (int i = 0; i < n - 1; i++) {
+		int j = i + rand() % (n - i);
+		swap(keys[i], keys[j]);
+	}
+	return keys;
+}
+
+void populateSMEmpty(SortedMap& sm, int cMin, int cMax) {
+	vector<int> keys = keysInRandomOrder(cMin, cMax);
+	int n = keys.size();
+	for (int i = 0; i < n; i++) {
+		assert(sm.add(keys[i], keys[i]) == NULL_TVALUE);
+	}
+}
+
+void rePopulateSMShift(SortedMap& sm, int cMin, int cMax, int shift) {
+	vector<int> keys = keysInRandomOrder(cMin, cMax);
+	int n = keys.size();
+	for (int i = 0; i < n; i++) {
+		assert(sm.add(keys[i], keys[i] - shift) == keys[i]);
+	}
+}
+
+void populateSMShift(SortedMap& sm, int cMin, int cMax, int shift) {
+	vector<int> keys = keysInRandomOrder(cMin, cMax);
+	int n = keys.size();
+	for (int i = 0; i < n; i++) {
+		sm.add(keys[i], keys[i] - shift);
+	}
+}
+
+void testAddAndSearch(Relation r) {
+	cout << "Test add and search" << endl;
+	SortedMap sm(r);
+	int cMin = 100;
+	int cMax = 200;
+
+	populateSMEmpty(sm, cMin, cMax);
+	testIteratorSteps(sm, r);
+	for (int c = cMin; c <= cMax; c++) {
+		assert(sm.search(c) == c);
+	}
+	assert(sm.size() == (cMax - cMin + 1));
+
+	rePopulateSMShift(sm, cMin, cMax, 1);
+	assert(sm.size() == (cMax - cMin + 1));
+	testIteratorSteps(sm, r);
+	populateSMShift(sm, 2 * cMax, 3 * cMax, 2 * cMax - cMin);
+	for (int c = 2 * cMax; c <= 3 * cMax; c++) {
+		assert(sm.search(c) == c - 2 * cMax + cMin);
+	}
+	testIteratorSteps(sm, r);
+	assert(sm.size() == (cMax - cMin + 1) + (cMax + 1));
+
+	SMIterator it = sm.iterator();
+	it.first();
+	if (it.valid()) {
+		TKey cPrec = it.getCurrent().first;
+		assert(sm.search(cPrec) != NULL_TVALUE);
+		it.next();
+		while (it.valid()) {
+			TKey c = it.getCurrent().first;
+			assert(r(cPrec, c));
+			assert(sm.search(c) != NULL_TVALUE);
+			cPrec = c;
+			it.next();
+		}
+	}
+
 }
 
 void testAdd() {
-	cout << "Test add" << endl;
-	MultiMap m; 
-	for (int i = 0; i < 10; i++) {
-		m.add(i, i);
+	testAddAndSearch(increasing);
+	testAddAndSearch(decreasing);
+}
+
+void testRemoveAndSearch(Relation r) {
+	cout << "Test remove and search" << endl;
+	SortedMap sm(r);
+	int cMin = 10;
+	int cMax = 20;
+	populateSMEmpty(sm, cMin, cMax);
+	testIteratorSteps(sm, r);
+	for (int c = cMax + 1; c <= 2 * cMax; c++) {
+		assert(sm.remove(c) == NULL_TVALUE);
+		testIteratorSteps(sm, r);
 	}
-	assert(m.isEmpty() == false);
-	assert(m.size() == 10);
-	for (int i = -10; i < 20; i++) { 
-		m.add(i, 2*i);
+	int dim = cMax - cMin + 1;
+	assert(sm.size() == dim);
+	for (int c = cMin; c <= cMax; c++) {
+		assert(sm.remove(c) == c);
+		assert(sm.search(c) == NULL_TVALUE);
+
+		SMIterator it = sm.iterator();
+		it.first();
+		if (it.valid()) {
+			TKey cPrec = it.getCurrent().first;
+			it.next();
+			while (it.valid()) {
+				TKey c = it.getCurrent().first;
+				assert(r(cPrec, c));
+				cPrec = c;
+				it.next();
+			}
+		}
+
+		dim--;
+		assert(sm.size() == dim);
+
 	}
-	testIteratorSteps(m);
-	assert(m.isEmpty() == false);
-	assert(m.size() == 40);
-	for (int i = -100; i < 100; i++) {
-		m.add(i, 3*i);
+
+	for (int c = cMin; c <= cMax; c++) {
+		assert(sm.remove(c) == NULL_TVALUE);
 	}
-	assert(m.isEmpty() == false);
-	assert(m.size() == 240);
-	for (int i = -200; i < 200; i++) { 
-		vector<TValue> v;
-		if (i < -100) {
-            v=m.search(i);
-			assert(v.size() == 0);
-		}
-		else if (i < -10) {
-            v=m.search(i);
-			assert(v.size() == 1);
-		}
-		else if (i < 0) {
-            v=m.search(i);
-			assert(v.size() == 2);
-		}
-		else if (i < 10) {
-            v=m.search(i);
-			assert(v.size() == 3);
-		}
-		else if (i < 20) {
-            v=m.search(i);
-			assert(v.size() == 2);
-		}
-		else if (i < 100) {
-            v=m.search(i);
-			assert(v.size() == 1);
-		}
-		else {
-            v=m.search(i);
-			assert(v.size() == 0);
-		}
-	}
-	testIteratorSteps(m);
-	for (int i = 10000; i > -10000; i--) { 
-		m.add(i, 4*i);
-	}
-	assert(m.size()==20240);
-	testIteratorSteps(m);
+	assert(sm.isEmpty());
+	assert(sm.size() == 0);
+
 }
 
 void testRemove() {
-	cout << "Test remove" << endl;
-	MultiMap m;
-	for (int i = -100; i < 100; i++) { 
-		assert(m.remove(i, i) == false);
-	}
-	assert(m.size() == 0);
-	for (int i = -100; i < 100; i = i + 2) { 
-		m.add(i, i);
-	}
-	for (int i = -100; i < 100; i++) { 
+	testRemoveAndSearch(increasing);
+	testRemoveAndSearch(decreasing);
+}
 
-		if (i % 2 == 0) {
-			assert(m.remove(i, i) == true);
-			assert(m.remove(i, 2*i) == false);
-		}
-		else {
-			assert(m.remove(i, i) == false);
-            assert(m.remove(i, 2*i) == false);
-		}
-	}
-	assert(m.size() == 0);
-
-	for(int i = 0; i <= 100; i++)
-        m.add(0, i);    
-    m.add(1, 100);
-	testIteratorSteps(m);
-    for(int i = 0; i <= 100; i++)
-        assert(m.remove(0, i) == true);
-    
-    vector<TValue> v;
-	v=m.search(1);
-    assert(v.size()==1 && v.at(0)==100);
-    v=m.search(0);
-    assert(v.size()==0);
-    MultiMapIterator it=m.iterator();
-    it.next();
-    assert(it.valid()==false);
-    
-    assert(m.remove(1,100)==true);
-    
-    assert(m.size()==0);
-	for (int i = -100; i <= 100; i = i + 2) { 
-		m.add(i, 2*i);
-	}
-	for (int i = 100; i > -100; i--) { 
-		if (i % 2 == 0) {
-  			assert(m.remove(i, 3*i+1) == false);
-			assert(m.remove(i, 2*i) == true);
-		}
-		else {
-			assert(m.remove(i, 3*i+1) == false);
-		}
-	}
-
-	assert(m.size() == 1);
-	bool b = m.remove(-100, -200);
-	assert(b==true);
-	for (int i = -100; i < 100; i++) { 
-	  if(i!=0){
-		m.add(i, i+1);
-		m.add(i, 2*i+1);
-		m.add(i, 3*i+1);
-		m.add(i, 4*i+1);
-		m.add(i, 5*i+1);
-	  }
-	}
-	assert(m.size() == 995);
-	testIteratorSteps(m);
-	for (int i = -100; i < 100; i++) {
-       if(i!=0){
-            v=m.search(i);
-			assert(v.size() == 5);
-		}
-	}
-	for (int i = -100; i < 100; i++) { 
-	  if (i!=0)
-		assert(m.remove(i,i+1) == true);
-	}
-	testIteratorSteps(m);
-	assert(m.size() == 796);
-	for (int i = -100; i < 100; i++) {
-       if (i!=0){
-            v=m.search(i);
-			assert(v.size() == 4);
-		}
-	}
-	for (int i = -200; i < 200; i++) { 
-		if (i < -100 || i >= 100) {
-			assert(m.remove(i, i) == false);
-			assert(m.remove(i, i) == false);
-			assert(m.remove(i, i) == false);
-			assert(m.remove(i, i) == false);
-			assert(m.remove(i, i) == false);
-		}
-		else
-          if (i!=0){
-			assert(m.remove(i, i+1) == false);
-			assert(m.remove(i, 2*i+1) == true);
-			assert(m.remove(i, 3*i+1) == true);
-			assert(m.remove(i, 4*i+1) == true);
-			assert(m.remove(i, 5*i+1) == true);
-		}
-	}
-	assert(m.size() == 0);
-	for (int i = -1000; i < 1000; i++) {
-            v=m.search(i);
-			assert(v.size() == 0);
-	}
-	int min = -200;
-	int max = 200;
-	while (min < max) { 
-		m.add(min, min);
-		m.add(max, max);
-		min++;
-		max--;
-	}
-	m.add(0, 100);
-	m.add(0, 200);
-	assert(m.size() == 402);
-	for (int i = -30; i < 30; i++) { 
-        v=m.search(i);
-		if (i==0) assert(v.size() == 2);
-		  else assert(v.size() == 1);
-		if (i!=0) assert(m.remove(i, i) == true);
-		if (i != 0) {
-            v=m.search(i);
-			assert(v.size() == 0);
-		}
-	}
-	assert(m.size() == 343);
- }
-
-
-void testIterator() { 
+void testIterator(Relation r) {
 	cout << "Test iterator" << endl;
-	MultiMap m;
-	MultiMapIterator im = m.iterator();
-	assert(im.valid() == false);
-	try {
-		im.getCurrent();
-		assert(false);
-	}
-	catch (exception& ex) {
-		assert(true);
-	}
-	try {
-		im.next();
-		assert(false);
-	}
-	catch (exception& ex) {
-		assert(true);
-	}
-	for (int i = 0; i < 100; i++) { 
-		m.add(33, 33);
-	}
-	MultiMapIterator im2 = m.iterator(); 
-	assert(im2.valid() == true);
-	for (int i = 0; i < 100; i++) {
-		TElem elem = im2.getCurrent();
-		assert(elem.first == 33 && elem.second==33);
-		im2.next();
-	}
-	assert(im2.valid() == false);
-	im2.first(); 
-	assert(im2.valid() == true);
-	for (int i = 0; i < 100; i++) {
-		TElem elem = im2.getCurrent();
-		TElem elem2 = im2.getCurrent();
-		assert(elem.first == 33 && elem.second==33);
-		assert(elem2.first == 33 && elem2.second==33);
-		im2.next();
-	}
-	assert(im2.valid() == false);
-
-	MultiMap m2;
-	for (int i = -100; i < 100; i++) { 
-		m2.add(i, 2*i);
-		m2.add(i, 3*i);
-		m2.add(i, 4*i);
-	}
-	MultiMapIterator im3 = m2.iterator();
-	assert(im3.valid() == true); 
-	for (int i = 0; i < 600; i++) {
-		TElem e1 = im3.getCurrent();
-		im3.next();
-	}
-	assert(im3.valid() == false);
-	im3.first();
-	assert(im3.valid() == true);
-	MultiMap m3;
-	for (int i = 0; i < 200; i= i + 4) {
-		m3.add(i, 5*i);
-	}
-	MultiMapIterator im4 = m3.iterator();
-	assert(im4.valid() == true);
-	int count = 0;
-	while (im4.valid()) { 
-		TElem e = im4.getCurrent();
-		assert(e.first % 4 == 0);
-		im4.next();
-		count++;
-	}
-	assert(count == 50);
-	MultiMap m4; 
-	for (int i = 0; i < 100; i++) {
-		m4.add(i, i);
-		m4.add(i, i * (-2));
-		m4.add(i, i * 2);
-		m4.add(i, i / 2);
-		m4.add(i, i / (-2));
-	}
-	
-	vector<TElem> elements;
-	MultiMapIterator im5 = m4.iterator();
-	while (im5.valid()) {
-		TElem e = im5.getCurrent();
-		elements.push_back(e);
-		im5.next();
+	SortedMap sm(r);
+	SMIterator it = sm.iterator();
+	assert(!it.valid());
+	it.first();
+	assert(!it.valid());
+	int cMin = 100;
+	int cMax = 300;
+	vector<int> keys = keysInRandomOrder(cMin, cMax);
+	int n = keys.size();
+	for (int i = 0; i < n; i++) {
+		assert(sm.add(keys[i], keys[n - i - 1]) == NULL_TVALUE);
 	}
 
-	assert(elements.size() == m4.size());
-	for (unsigned int i = 0; i < elements.size(); i++) {
-		TElem lastElem = elements.at(elements.size() - i - 1);
-		vector<TValue> v1;
-		v1 = m4.search(lastElem.first);
-		assert(v1.size() != 0);
-		bool b = m4.remove(lastElem.first, lastElem.second);
-	//assert(b == true);
-	}
+	SMIterator itSM = sm.iterator();
+	assert(itSM.valid());
+	itSM.first();
+	assert(itSM.valid());
 
+	TKey cPrec = itSM.getCurrent().first;
+	for (int i=1; i<100; i++){
+		assert(cPrec == itSM.getCurrent().first);
+	}
+    itSM.next();
+	while (itSM.valid()) {
+		TKey c = itSM.getCurrent().first;
+		assert(cMin <= c && c <= cMax);
+		assert(sm.search(c) != NULL_TVALUE);
+		assert(r(cPrec, c));
+		cPrec = c;
+		itSM.next();
+	}
 }
 
-void testQuantity() {
+void testQuantity(){
 	cout << "Test quantity" << endl;
-	MultiMap m;
-	for (int i = 10; i >= 1; i--) {
-		for (int j = -30000; j < 30000; j = j + i) {
-			m.add(j, j);
-		}
-	}
-	assert(m.size() == 175739);
-	vector<TValue> v;
-    v=m.search(-30000);
-    assert(v.size() == 10);
-
-	MultiMapIterator im = m.iterator();
-	assert(im.valid() == true);
-	for (int i = 0; i < m.size(); i++) {
-		im.next();
-	}
-	im.first();
-	while (im.valid()) { 
-		TElem e = im.getCurrent();
-        v=m.search(e.first);
-        assert(v.size() !=0 );
-		im.next();
-	}
-	assert(im.valid() == false);
+	SortedMap sm(increasing);
+	int cMin = -3000;
+	int cMax = 3000;
+	vector<int> keys  = keysInRandomOrder(cMin, cMax);
+    populateSMEmpty(sm, cMin, cMax);
+    for (int c = cMin; c <= cMax; c++){
+      	assert(sm.search(c) == c);
+    }
+	testIteratorSteps(sm, increasing);
+    assert(sm.size() == cMax - cMin + 1);
+    SMIterator it  = sm.iterator();
+    assert(it.valid());
+    it.first();
+    assert(it.valid());
+    for (int i = 0; i < sm.size(); i++) {
+    	it.next();
+    }
+    assert(!it.valid());
+    it.first();
+    while (it.valid()){
+    	TKey c = it.getCurrent().first;
+    	assert(sm.search(c) == c);
+        TValue v  = it.getCurrent().second;
+        assert(c == v);
+        it.next();
+    }
+    assert(!it.valid());
+    for (int c = cMin-100; c <= cMax+100; c++){
+         sm.remove(c);
+         assert(sm.search(c) == NULL_TVALUE);	
+		 testIteratorSteps(sm, increasing);
+    }
+    assert(sm.size() == 0);
+    assert(sm.isEmpty());
 }
 
+void testIterator() {
+	testIterator(increasing);
+	testIterator(decreasing);
+}
 
 void testAllExtended() {
 	testCreate();
 	testAdd();
+	testSearch();
 	testRemove();
-    testIterator();
+	testIterator();
 	testQuantity();
 }
