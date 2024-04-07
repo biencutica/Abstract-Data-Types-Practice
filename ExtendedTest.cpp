@@ -1,363 +1,361 @@
-/*#include <assert.h>
-#include "Bag.h"
-#include "ExtendedTest.h"
-#include "BagIterator.h"
+#include "ShortTest.h"
+#include "MultiMap.h"
+#include "MultiMapIterator.h"
+#include <assert.h>
 #include <iostream>
+#include <stdlib.h>
 #include <vector>
+
 #include <exception>
 
 using namespace std;
 
-void testIteratorSteps(Bag& bag) {
+void testIteratorSteps(MultiMap& mm) {
 	int count = 0;
-	BagIterator bi = bag.iterator();
-	while (bi.valid()) {
+	MultiMapIterator mmit = mm.iterator();
+	while (mmit.valid()) {
 		count++;
-		bi.next();
+		mmit.next();
 	}
-	assert(count == bag.size());
+	assert(count == mm.size());
 }
 
 void testCreate() {
 	cout << "Test create" << endl;
-	Bag b;
-	assert(b.size() == 0);
-	assert(b.isEmpty() == true);
-	for (int i = -5; i < 5; i++) { 
-		assert(b.search(i) == false);
-	}
-	for (int i = -10; i < 10; i++) {
-		assert(b.remove(i) == false);
-	}
-	for (int i = -10; i < 10; i++) {
-		assert(b.nrOccurrences(i) == 0);
-	}
+	MultiMap m;
+	assert(m.isEmpty() == true);
+	assert(m.size() == 0);
 
-	BagIterator it = b.iterator(); 
-	assert(it.valid() == false);
+	MultiMapIterator im = m.iterator();
+	assert(im.valid() == false);
+
+	for (int i = -10; i < 30; i++) {
+		assert(m.remove(i, i) == false);
+	}
+    vector<TValue> v;
+	for (int i = -10; i < 30; i++) {
+            v=m.search(i);
+            assert(v.size()==0);
+	}
 }
 
 void testAdd() {
 	cout << "Test add" << endl;
-	Bag b; 
+	MultiMap m; 
 	for (int i = 0; i < 10; i++) {
-		b.add(i);
+		m.add(i, i);
 	}
-	assert(b.isEmpty() == false);
-	assert(b.size() == 10);
+	assert(m.isEmpty() == false);
+	assert(m.size() == 10);
 	for (int i = -10; i < 20; i++) { 
-		b.add(i);
+		m.add(i, 2*i);
 	}
-	assert(b.isEmpty() == false);
-	assert(b.size() == 40);
+	testIteratorSteps(m);
+	assert(m.isEmpty() == false);
+	assert(m.size() == 40);
 	for (int i = -100; i < 100; i++) {
-		b.add(i);
+		m.add(i, 3*i);
 	}
-	assert(b.isEmpty() == false);
-	assert(b.size() == 240);
-	testIteratorSteps(b);
+	assert(m.isEmpty() == false);
+	assert(m.size() == 240);
 	for (int i = -200; i < 200; i++) { 
-		int count = b.nrOccurrences(i);
+		vector<TValue> v;
 		if (i < -100) {
-			assert(count == 0);
-			assert(b.search(i) == false);
+            v=m.search(i);
+			assert(v.size() == 0);
 		}
 		else if (i < -10) {
-			assert(count == 1);
-			assert(b.search(i) == true);
+            v=m.search(i);
+			assert(v.size() == 1);
 		}
 		else if (i < 0) {
-			assert(count == 2);
-			assert(b.search(i) == true);
+            v=m.search(i);
+			assert(v.size() == 2);
 		}
 		else if (i < 10) {
-			assert(count == 3);
-			assert(b.search(i) == true);
+            v=m.search(i);
+			assert(v.size() == 3);
 		}
 		else if (i < 20) {
-			assert(count == 2);
-			assert(b.search(i) == true);
+            v=m.search(i);
+			assert(v.size() == 2);
 		}
 		else if (i < 100) {
-			assert(count == 1);
-			assert(b.search(i) == true);
+            v=m.search(i);
+			assert(v.size() == 1);
 		}
 		else {
-			assert(count == 0);
-			assert(b.search(i) == false);
+            v=m.search(i);
+			assert(v.size() == 0);
 		}
 	}
-	for (int i = 10000; i > -10000; i--) {
-		b.add(i);
+	testIteratorSteps(m);
+	for (int i = 10000; i > -10000; i--) { 
+		m.add(i, 4*i);
 	}
-	assert(b.size() == 20240);
-	testIteratorSteps(b);
+	assert(m.size()==20240);
+	testIteratorSteps(m);
 }
 
 void testRemove() {
 	cout << "Test remove" << endl;
-	Bag b;
+	MultiMap m;
 	for (int i = -100; i < 100; i++) { 
-		assert(b.remove(i) == false);
+		assert(m.remove(i, i) == false);
 	}
-	assert(b.size() == 0);
+	assert(m.size() == 0);
 	for (int i = -100; i < 100; i = i + 2) { 
-		b.add(i);
+		m.add(i, i);
 	}
-	for (int i = -100; i < 100; i++) {
+	for (int i = -100; i < 100; i++) { 
 
 		if (i % 2 == 0) {
-			assert(b.remove(i) == true);
+			assert(m.remove(i, i) == true);
+			assert(m.remove(i, 2*i) == false);
 		}
 		else {
-			assert(b.remove(i) == false);
+			assert(m.remove(i, i) == false);
+            assert(m.remove(i, 2*i) == false);
 		}
 	}
-	testIteratorSteps(b);
-	assert(b.size() == 0);
+	assert(m.size() == 0);
+
+	for(int i = 0; i <= 100; i++)
+        m.add(0, i);    
+    m.add(1, 100);
+	testIteratorSteps(m);
+    for(int i = 0; i <= 100; i++)
+        assert(m.remove(0, i) == true);
+    
+    vector<TValue> v;
+	v=m.search(1);
+    assert(v.size()==1 && v.at(0)==100);
+    v=m.search(0);
+    assert(v.size()==0);
+    MultiMapIterator it=m.iterator();
+    it.next();
+    assert(it.valid()==false);
+    
+    assert(m.remove(1,100)==true);
+    
+    assert(m.size()==0);
 	for (int i = -100; i <= 100; i = i + 2) { 
-		b.add(i);
+		m.add(i, 2*i);
 	}
 	for (int i = 100; i > -100; i--) { 
 		if (i % 2 == 0) {
-			assert(b.remove(i) == true);
+  			assert(m.remove(i, 3*i+1) == false);
+			assert(m.remove(i, 2*i) == true);
 		}
 		else {
-			assert(b.remove(i) == false);
+			assert(m.remove(i, 3*i+1) == false);
 		}
 	}
-	testIteratorSteps(b);
-	assert(b.size() == 1);
-	b.remove(-100);
+
+	assert(m.size() == 1);
+	bool b = m.remove(-100, -200);
+	assert(b==true);
 	for (int i = -100; i < 100; i++) { 
-		b.add(i);
-		b.add(i);
-		b.add(i);
-		b.add(i);
-		b.add(i);
+	  if(i!=0){
+		m.add(i, i+1);
+		m.add(i, 2*i+1);
+		m.add(i, 3*i+1);
+		m.add(i, 4*i+1);
+		m.add(i, 5*i+1);
+	  }
 	}
-	assert(b.size() == 1000);
+	assert(m.size() == 995);
+	testIteratorSteps(m);
 	for (int i = -100; i < 100; i++) {
-		assert(b.nrOccurrences(i) == 5);
+       if(i!=0){
+            v=m.search(i);
+			assert(v.size() == 5);
+		}
 	}
 	for (int i = -100; i < 100; i++) { 
-		assert(b.remove(i) == true);
+	  if (i!=0)
+		assert(m.remove(i,i+1) == true);
 	}
-	assert(b.size() == 800);
+	testIteratorSteps(m);
+	assert(m.size() == 796);
 	for (int i = -100; i < 100; i++) {
-		assert(b.nrOccurrences(i) == 4);
+       if (i!=0){
+            v=m.search(i);
+			assert(v.size() == 4);
+		}
 	}
 	for (int i = -200; i < 200; i++) { 
 		if (i < -100 || i >= 100) {
-			assert(b.remove(i) == false);
-			assert(b.remove(i) == false);
-			assert(b.remove(i) == false);
-			assert(b.remove(i) == false);
-			assert(b.remove(i) == false);
+			assert(m.remove(i, i) == false);
+			assert(m.remove(i, i) == false);
+			assert(m.remove(i, i) == false);
+			assert(m.remove(i, i) == false);
+			assert(m.remove(i, i) == false);
 		}
-		else {
-			assert(b.remove(i) == true);
-			assert(b.remove(i) == true);
-			assert(b.remove(i) == true);
-			assert(b.remove(i) == true);
-			assert(b.remove(i) == false);
+		else
+          if (i!=0){
+			assert(m.remove(i, i+1) == false);
+			assert(m.remove(i, 2*i+1) == true);
+			assert(m.remove(i, 3*i+1) == true);
+			assert(m.remove(i, 4*i+1) == true);
+			assert(m.remove(i, 5*i+1) == true);
 		}
 	}
-	assert(b.size() == 0);
+	assert(m.size() == 0);
 	for (int i = -1000; i < 1000; i++) {
-		assert(b.nrOccurrences(i) == 0);
+            v=m.search(i);
+			assert(v.size() == 0);
 	}
 	int min = -200;
 	int max = 200;
 	while (min < max) { 
-		b.add(min);
-		b.add(max);
+		m.add(min, min);
+		m.add(max, max);
 		min++;
 		max--;
 	}
-	b.add(0);
-	b.add(0);
-	assert(b.size() == 402);
-	testIteratorSteps(b);
+	m.add(0, 100);
+	m.add(0, 200);
+	assert(m.size() == 402);
 	for (int i = -30; i < 30; i++) { 
-
-		assert(b.search(i) == true);
-		assert(b.remove(i) == true);
+        v=m.search(i);
+		if (i==0) assert(v.size() == 2);
+		  else assert(v.size() == 1);
+		if (i!=0) assert(m.remove(i, i) == true);
 		if (i != 0) {
-			assert(b.search(i) == false);
-		}
-		else {
-			assert(b.search(i) == true);
+            v=m.search(i);
+			assert(v.size() == 0);
 		}
 	}
-	assert(b.size() == 342);
-
-}
+	assert(m.size() == 343);
+ }
 
 
 void testIterator() { 
 	cout << "Test iterator" << endl;
-	Bag b;
-	BagIterator it = b.iterator(); 
-	assert(it.valid() == false);
+	MultiMap m;
+	MultiMapIterator im = m.iterator();
+	assert(im.valid() == false);
 	try {
-		it.next();
+		im.getCurrent();
 		assert(false);
 	}
-	catch (exception&) {
-		assert (true);
-	}
-	try {
-		it.getCurrent();
-		assert(false);
-	}
-	catch (exception&) {
+	catch (exception& ex) {
 		assert(true);
 	}
-
-	for (int i = 0; i < 100; i++) {  
-		b.add(33);
+	try {
+		im.next();
+		assert(false);
 	}
-	BagIterator it2 = b.iterator(); 
-	assert(it2.valid() == true);
+	catch (exception& ex) {
+		assert(true);
+	}
+	for (int i = 0; i < 100; i++) { 
+		m.add(33, 33);
+	}
+	MultiMapIterator im2 = m.iterator(); 
+	assert(im2.valid() == true);
 	for (int i = 0; i < 100; i++) {
-		TElem elem = it2.getCurrent();
-		assert(elem == 33);
-		it2.next();
+		TElem elem = im2.getCurrent();
+		assert(elem.first == 33 && elem.second==33);
+		im2.next();
 	}
-	assert(it2.valid() == false);
-	it2.first(); 
-	assert(it2.valid() == true);
+	assert(im2.valid() == false);
+	im2.first(); 
+	assert(im2.valid() == true);
 	for (int i = 0; i < 100; i++) {
-		TElem elem = it2.getCurrent();
-		TElem elem2 = it2.getCurrent();
-		assert(elem == 33);
-		assert(elem2 == 33);
-		it2.next();
+		TElem elem = im2.getCurrent();
+		TElem elem2 = im2.getCurrent();
+		assert(elem.first == 33 && elem.second==33);
+		assert(elem2.first == 33 && elem2.second==33);
+		im2.next();
 	}
-	assert(it2.valid() == false);
-	try {
-		it2.next();
-		assert(false);
-	}
-	catch (exception&) {
-		assert(true);
-	}
-	try {
-		it2.getCurrent();
-		assert(false);
-	}
-	catch (exception&) {
-		assert(true);
-	}
+	assert(im2.valid() == false);
 
-
-	Bag b2;
+	MultiMap m2;
 	for (int i = -100; i < 100; i++) { 
-		b2.add(i);
-		b2.add(i);
-		b2.add(i);
+		m2.add(i, 2*i);
+		m2.add(i, 3*i);
+		m2.add(i, 4*i);
 	}
-	BagIterator it3 = b2.iterator();
-	assert(it3.valid() == true); 
+	MultiMapIterator im3 = m2.iterator();
+	assert(im3.valid() == true); 
 	for (int i = 0; i < 600; i++) {
-		TElem e1 = it3.getCurrent();
-		it3.next();
+		TElem e1 = im3.getCurrent();
+		im3.next();
 	}
-	assert(it3.valid() == false);
-	it3.first();
-	assert(it3.valid() == true);
-	Bag b3;
-	for (int i = 0; i < 200; i = i + 4) { 
-		b3.add(i);
+	assert(im3.valid() == false);
+	im3.first();
+	assert(im3.valid() == true);
+	MultiMap m3;
+	for (int i = 0; i < 200; i= i + 4) {
+		m3.add(i, 5*i);
 	}
-	BagIterator it4 = b3.iterator();
-	assert(it4.valid() == true);
+	MultiMapIterator im4 = m3.iterator();
+	assert(im4.valid() == true);
 	int count = 0;
-	while (it4.valid()) { 
-		TElem e = it4.getCurrent();
-		assert(e % 4 == 0);
-		it4.next();
+	while (im4.valid()) { 
+		TElem e = im4.getCurrent();
+		assert(e.first % 4 == 0);
+		im4.next();
 		count++;
 	}
 	assert(count == 50);
-	Bag b4; 
+	MultiMap m4; 
 	for (int i = 0; i < 100; i++) {
-		b4.add(i);
-		b4.add(i * (-2));
-		b4.add(i * 2);
-		b4.add(i / 2);
-		b4.add(i / (-2));
+		m4.add(i, i);
+		m4.add(i, i * (-2));
+		m4.add(i, i * 2);
+		m4.add(i, i / 2);
+		m4.add(i, i / (-2));
 	}
+	
 	vector<TElem> elements;
-	BagIterator it5 = b4.iterator();
-	while (it5.valid()) {
-		TElem e = it5.getCurrent();
+	MultiMapIterator im5 = m4.iterator();
+	while (im5.valid()) {
+		TElem e = im5.getCurrent();
 		elements.push_back(e);
-		it5.next();
+		im5.next();
 	}
 
-	assert(elements.size() == b4.size());
-	for (unsigned int i = 0; i < elements.size(); i++) { 
+	assert(elements.size() == m4.size());
+	for (unsigned int i = 0; i < elements.size(); i++) {
 		TElem lastElem = elements.at(elements.size() - i - 1);
-		assert(b4.search(lastElem) == true);
-		b4.remove(lastElem);
+		vector<TValue> v1;
+		v1 = m4.search(lastElem.first);
+		assert(v1.size() != 0);
+		bool b = m4.remove(lastElem.first, lastElem.second);
+	//assert(b == true);
 	}
 
-	Bag b5;
-	for (int i = 0; i < 100; i++) {
-		b5.add(i);
-		b5.add(i * (-2));
-		b5.add(i * 2);
-		b5.add(i / 2);
-		b5.add(i / (-2));
-	}	
-	vector<TElem> elements2;
-	BagIterator it6 = b5.iterator();
-	while (it6.valid()) {
-		TElem e = it6.getCurrent();
-		elements2.push_back(e);
-		it6.next();
-	}
-
-	assert(elements2.size() == b5.size());
-	for (unsigned int i = 0; i < elements2.size(); i++) { 
-		TElem firstElem = elements2.at(i);
-		assert(b5.search(firstElem) == true);
-		b5.remove(firstElem);
-	}
 }
 
 void testQuantity() {
 	cout << "Test quantity" << endl;
-	Bag b;
+	MultiMap m;
 	for (int i = 10; i >= 1; i--) {
 		for (int j = -30000; j < 30000; j = j + i) {
-			b.add(j);
+			m.add(j, j);
 		}
 	}
-	assert(b.size() == 175739);
-	testIteratorSteps(b);
-	assert(b.nrOccurrences(-30000) == 10);
-	BagIterator it = b.iterator();
-	assert(it.valid() == true);
-	for (int i = 0; i < b.size(); i++) {
-		it.next();
+	assert(m.size() == 175739);
+	vector<TValue> v;
+    v=m.search(-30000);
+    assert(v.size() == 10);
+
+	MultiMapIterator im = m.iterator();
+	assert(im.valid() == true);
+	for (int i = 0; i < m.size(); i++) {
+		im.next();
 	}
-	it.first();
-	while (it.valid()) { 
-		TElem e = it.getCurrent();
-		assert(b.search(e) == true);
-		assert(b.nrOccurrences(e) > 0);
-		it.next();
+	im.first();
+	while (im.valid()) { 
+		TElem e = im.getCurrent();
+        v=m.search(e.first);
+        assert(v.size() !=0 );
+		im.next();
 	}
-	assert(it.valid() == false);
-	for (int i = 0; i < 10; i++) { 
-		for (int j = 40000; j >= -40000; j--) {
-			b.remove(j);
-		}
-	}
-	assert(b.size() == 0);
+	assert(im.valid() == false);
 }
 
 
@@ -365,7 +363,6 @@ void testAllExtended() {
 	testCreate();
 	testAdd();
 	testRemove();
-	testIterator();
+    testIterator();
 	testQuantity();
 }
-*/

@@ -1,34 +1,42 @@
-/*#include "ShortTest.h"
+#include "ShortTest.h"
+#include "MultiMap.h"
+#include "MultiMapIterator.h"
 #include <assert.h>
-#include "Bag.h"
-#include "BagIterator.h"
+#include <vector>
+#include<iostream>
 
+void testAll() {
+	MultiMap m;
+	m.add(1, 100);
+	m.add(2, 200);
+	m.add(3, 300);
+	m.add(1, 500);
+	m.add(2, 600);
+	m.add(4, 800);
 
-void testAll() { 
-	Bag b;
-	assert(b.isEmpty() == true);
-	assert(b.size() == 0); 
-	b.add(5);
-	b.add(1);
-	b.add(10);
-	b.add(7);
-	b.add(1);
-	b.add(11);
-	b.add(-3);
-	assert(b.size() == 7);
-	assert(b.search(10) == true);
-	assert(b.search(16) == false);
-	assert(b.nrOccurrences(1) == 2);
-	assert(b.nrOccurrences(7) == 1);
-	assert(b.remove(1) == true);
-	assert(b.remove(6) == false);
-	assert(b.size() == 6);
-	assert(b.nrOccurrences(1) == 1);
-	BagIterator it = b.iterator();
-	it.first();
-	while (it.valid()) {
-		TElem e = it.getCurrent();
-		it.next();
+	assert(m.size() == 6);
+
+	assert(m.remove(5, 600) == false);
+	assert(m.remove(1, 500) == true);
+
+	assert(m.size() == 5);
+
+    vector<TValue> v;
+	v=m.search(6);
+	assert(v.size()==0);
+
+	v=m.search(1);
+	assert(v.size()==1);
+
+	assert(m.isEmpty() == false);
+
+	MultiMapIterator im = m.iterator();
+	assert(im.valid() == true);
+	while (im.valid()) {
+		im.getCurrent();
+		im.next();
 	}
+	assert(im.valid() == false);
+	im.first();
+	assert(im.valid() == true);
 }
-*/
