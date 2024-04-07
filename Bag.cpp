@@ -1,198 +1,162 @@
+#include "Bag.h"
 #include "BagIterator.h"
-#include"Bag.h"
-#include <exception>
 #include <iostream>
+#include <exception>
+#include <math.h>
 using namespace std;
 
-template<typename T>
-void Bag<T>::resize() {
-	// theta(n)
-	// bc:theta(n)
-	// wc:theta(n)
-	// overall:theta(n)
+//function that gives the hashCode of an element
+int hashCode(TElem e){
+   return abs(e);
+}
 
-	//We allocate a new array with double capacity somewhere in the computer's memory
-	std::pair<TKey, T>* eNou = new std::pair<TKey, T>[2 * cp];
+//the hash function
+int Bag::h(TElem e) {
+	//division method
+	return hashCode(e) % m;
+}
 
-	//We copy all the elements from the old array into the new array
-	for (int i = 0; i < n; i++) { //theta(n)
-		eNou[i] = arr[i];
+
+Bag::Bag() {
+	//Best Case: theta(m) 
+	//Worst Case: theta(m)  
+	//Average Case: theta(m)
+
+	nr = 0;
+    m = MAX; //we initialize m with a high enough predefined value
+	for (int i = 0; i < m; i++) {
+		e[i] = NULL_TPAIR;
+		next[i] = -1;
 	}
-
-	//We double the capacity
-	cp = 2 * cp;
-
-	//We release the memory space occupied by the old array
-	delete[] arr;
-
-	//We make eNou to refer the new array (with double capacity)
-	arr = eNou;
+	firstEmpty = 0;
 }
 
-template<typename T>
-Bag<T>::Bag() { //Uniform Initializer 
-	// theta(1)
-	// bc:theta(1)
-	// wc:theta(1)
-	// overall:theta(1)
 
-	//We initialize the capacity
-	cp = 1;
+void Bag::updateFirstEmpty(){
+	//Best Case: theta(1) 
+	//Worst Case: theta(m)  
+	//Average Case: O(m)
 
-	//We allocate memory space for an array with at most cp TPairs
-	arr = new std::pair<TKey, T>[cp];
-
-	//We initialize the number of elements
-	n = 0;
-
+	firstEmpty++;
+	while (firstEmpty < m && e[firstEmpty].first != NULL_TELEM)
+		firstEmpty++;
 }
 
-template<typename T>
-void Bag<T>::add(T elem) {
-	// theta(n)
-	// bc:theta(n)
-	// wc:theta(n)
-	// overall:theta(n)
 
-	//If the maximum capacity has been reached, then we resize the array of elements
-	if (n == cp)
-		resize(); //theta(n)
-
-	//We iterate through the array and check if we find the element
-	//If so, we +1 the number of occurences
-	int ok = 0;
-	for (int i = 0; i < n; i++) //theta(n)
+// adding an element into the bag
+void Bag::add(TElem elem) {
+	//Best Case: theta(1) : if the position is free 
+	//Worst Case: theta(m) : it iterates through the whole chain
+	//Average Case: O(m) : we find the element while iterating
+	
+	// the hash
+	int i = h(elem);
+	if (e[i].first == NULL_TELEM)	// if the position is free
 	{
-		if (arr[i].second == elem) {
-			arr[i].first++;
-			ok = 1;
-		}
+		e[i] = TPair(elem, 1);	// we add the element
+		if (i == firstEmpty)
+			updateFirstEmpty();	// we update first empty, if needed
+		nr++;
+		return;
 	}
 
-	//If the number is not in the list
-	//We add the element to the end of the array
-	if (ok != 1) {
-		arr[n].second = elem;
-		arr[n++].first = 1;
+	// if the position is not free
+	int prev = -1;	// j will be the previous of i
+	while (i != -1)	// we are iterating to the end of the chaining
+	{
+		if (e[i].first == elem) { //if somehow by iterating we find the element
+			e[i].second++;
+			nr++;
+			return;
+		}
+		prev = i;
+		i = next[i];
 	}
+
+	// if we didnt find the element
+	// we are assuming that m is high-enough
+	e[firstEmpty] = TPair(elem, 1);
+	next[prev] = firstEmpty;
+	updateFirstEmpty();
+	nr++;
 }
 
-template<typename T>
-bool Bag<T>::remove(T elem) {
-	// bc:theta(n)
-	// wc:theta(n)
-	// overall:theta(n)
+bool Bag::remove(TElem elem){
+	//Best Case: theta(1) : when the elem is in the list and we decrement the frequency
+	//Worst Case: theta(m) : it's the first one in the chain
+	//Average Case: O(m) : when the element is the last one in the chain
 
-	//We start searching for the element to be deleted (one occurrence only!) from index 0
-	bool found = false;
-	int i = 0;
-	//While we still have elements to compare the element and the element hasn't been found
-	while (i < n && !found) { //theta(n)
-		//We compare the current element with the one to be deleted
-		//If they are equal
-		if (arr[i].second == elem) {
-			//We just found the element
-			found = true;
-			//We also remove it's occurence 
-			arr[i].first--;
-			//If the number of it's occurences is 0, we delete it by shifting all the elements starting from index i+1 one position to the left
-			if (arr[i].first == 0) {
-				for (int j = i; j < n - 1; j++) {
-					arr[j] = arr[j + 1];
-				}
-				n--; //And we decrement the size
+	int i = h(elem);
+	int prev = -1; // to store the previous hash in the chain
+
+	// iterate through the whole list
+	while (i != -1) {
+		if (e[i].first == elem) {
+			if (e[i].second > 1) {
+				e[i].second--;
 			}
-		}
-		else {
-			//, then we just increase the index in order to advance in traversing the array of elements
-			i++;
-		}
-	}
-	//We return if we managed to remove an element (found = true if removed, false otherwise)
-	return found;
-}
+			else {
+				e[i] = NULL_TPAIR;
+				while (next[i] != -1) { //shift all elements in the chain
+					e[i] = e[next[i]];
+					prev = i;
+					i = next[i];
+				}
+				e[i] = NULL_TPAIR; //empty the last slot of the chain 
+				if(prev != -1)
+					next[prev] = -1; // and set it's next to -1
 
-template <typename T>
-bool Bag<T>::search(T elem) const {
-	// bc:theta(1)
-	// wc:theta(n)
-	// overall:O(n)
-
-	//We traverse the array of elements
-	for (int i = 0; i < n; i++) {
-		//and compare each element in the array with the element we are searching for
-		//If the two are equal then we just return true (and exit the loop)
-		if (arr[i].second == elem)
+			}
+			nr--;
 			return true;
+		}
+		prev = i;
+		i = next[i];
 	}
-	//If the element hasn't been found, we return false
 	return false;
 }
 
-template<typename T>
-int Bag<T>::nrOccurrences(T elem) const {
-	// bc:theta(1)
-	// wc:theta(n)
-	// overall:O(n)
 
-	//We traverse the array of elements
-	for (int i = 0; i < n; i++)
-		//If the element has been found
-		if (arr[i].second == elem)
-			//we return the number of it's occurences
-			return arr[i].first;
-	//if the number hasn't been found, we just return 0
+
+bool Bag::search(TElem elem) const{
+	//Best Case: theta(1) : if it's the first in the list
+	//Worst Case: theta(m) : if it doesn't exist
+	//Average Case: O(m) : if it's in the middle
+
+	for (auto el : e)
+		if (el.first == elem)
+			return true;
+	return false;
+}
+
+int Bag::nrOccurrences(TElem elem) const{
+	//Best Case: theta(1) : if it's the first in the list
+	//Worst Case: theta(m) : if it doesn't exist
+	//Average Case: O(m) : if it's in the middle
+
+	for (auto el : e)
+		if (el.first == elem)
+			return el.second;
 	return 0;
 }
 
-template<typename T>
-int Bag<T>::size() const {
-	//bc:theta(n)
-	//wc:theta(n)
-	//overall:theta(n)
-
-	//we initialize nr as the size of the bag, representing the number of all the elements in the array with 0
-	int nr = 0;
-	//we go through the array and count all the number of occurences of each element
-	for (int i = 0; i < n; i++)
-		nr += arr[i].first;
-	//and we return the number of elements, i.e. the size
+int Bag::size() const
+{
 	return nr;
 }
 
-template<typename T>
-bool Bag<T>::isEmpty() const {
-	// bc:theta(1)
-	// wc:theta(1)
-	// overall:theta(1)
-	//The bag is empty if and only if the current number of elements is 0
-	return (n == 0);
+BagIterator Bag::iterator() const{
+	return BagIterator(*this);
 }
 
-template<typename T>
-BagIterator<T> Bag<T>::iterator() const {
-	// bc:theta(1)
-	// wc:theta(1)
-	// overall:theta(1)
-
-	return BagIterator<T>(*this);
+bool Bag::isEmpty() const
+{
+	return nr == 0;
 }
 
-template<typename T>
-void Bag<T>::print() const {
-	// Iterate through the array of elements
-	for (int i = 0; i < n; i++) {
-		// Print the element and its number of occurrences
-		cout << arr[i].second << ": " << arr[i].first << endl;
-	}
+Bag::~Bag() {
 }
 
-template<typename T>
-Bag<T>::~Bag() {
-	// bc:theta(1)
-	// wc:theta(1)
-	// overall:theta(1)
 
-	//We free the memory space allocated for the array of elements
-	delete[] arr;
-}
+
+

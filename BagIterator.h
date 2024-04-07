@@ -1,16 +1,21 @@
 #include "Bag.h"
 
-template<typename T>
 class BagIterator
 {
+	//DO NOT CHANGE THIS PART
+	friend class Bag;
+	
 private:
-	const Bag<T>& bag;
+	const Bag& bag;
+	//the current location in the hash table
 	int current;
-	int occurence;
-	BagIterator(const Bag<T>& c);
+	//moving the cursor to the next non-empty position
+	void move();
+	BagIterator(const Bag& c);
+	int index;
 public:
 	void first();
 	void next();
-	T getCurrent() const;
+	TElem getCurrent() const;
 	bool valid() const;
 };

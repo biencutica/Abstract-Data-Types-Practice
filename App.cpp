@@ -1,20 +1,15 @@
-#include "ExtendedTest.h"
+#include "Bag.h"
 #include "ShortTest.h"
-
-#include "SortedMap.h"
-
-
+#include "ExtendedTest.h"
 #include <iostream>
+
 using namespace std;
 
-
 int main() {
+
 	testAll();
+	cout << "Short tests over" << endl;
 	testAllExtended();
 
-	cout << "That's all!" << endl;
-	system("pause");
-	return 0;
+	cout << "All tests over" << endl;
 }
-
-

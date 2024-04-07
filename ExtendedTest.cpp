@@ -1,64 +1,213 @@
-#include <exception>
 #include <assert.h>
-#include <algorithm>
-#include <vector>
-#include <iostream>
-#include "SortedMap.h"
-#include "SMIterator.h"
+#include "Bag.h"
 #include "ExtendedTest.h"
+#include "BagIterator.h"
+#include <iostream>
+#include <vector>
+#include <exception>
 
 using namespace std;
 
-bool increasing(TKey c1, TKey c2) {
-	if (c1 <= c2) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-bool decreasing(TKey c1, TKey c2) {
-	if (c1 >= c2) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-void testIteratorSteps(SortedMap& m, Relation r) {
-	SMIterator li = m.iterator();
-	TElem elem = NULL_TPAIR;
+void testIteratorSteps(Bag& bag) {
 	int count = 0;
-	if (li.valid()) {
-		elem = li.getCurrent();
+	BagIterator bi = bag.iterator();
+	while (bi.valid()) {
 		count++;
-		li.next();
+		bi.next();
 	}
-	while (li.valid()) {
-		TElem elem2 = li.getCurrent();
-		assert(r(elem.first, elem2.first));
-		elem = elem2;
-		count++;
-		li.next();
-	}
-	assert(count == m.size());
+	assert(count == bag.size());
+
 }
 
 void testCreate() {
 	cout << "Test create" << endl;
-	SortedMap sm(increasing);
-	assert(sm.size() == 0);
-	assert(sm.isEmpty());
+	Bag b;
+	assert(b.size() == 0);
+	assert(b.isEmpty() == true);
+	for (int i = -5; i < 5; i++) { 
+		assert(b.search(i) == false);
+	}
+	for (int i = -10; i < 10; i++) {
+		assert(b.remove(i) == false);
+	}
+	for (int i = -10; i < 10; i++) {
+		assert(b.nrOccurrences(i) == 0);
+	}
 
-	SMIterator it = sm.iterator();
-	it.first();
-	assert(!it.valid());
+	BagIterator it = b.iterator(); 
+	assert(it.valid() == false);
+}
+
+void testAdd() {
+	cout << "Test add" << endl;
+	Bag b; 
+	for (int i = 0; i < 10; i++) {
+		b.add(i);
+	}
+	assert(b.isEmpty() == false);
+	assert(b.size() == 10);
+	for (int i = -10; i < 20; i++) { 
+		b.add(i);
+	}
+	assert(b.isEmpty() == false);
+	assert(b.size() == 40);
+	for (int i = -100; i < 100; i++) {
+		b.add(i);
+	}
+	assert(b.isEmpty() == false);
+	assert(b.size() == 240);
+	testIteratorSteps(b);
+	for (int i = -200; i < 200; i++) { 
+		int count = b.nrOccurrences(i);
+		if (i < -100) {
+			assert(count == 0);
+			assert(b.search(i) == false);
+		}
+		else if (i < -10) {
+			assert(count == 1);
+			assert(b.search(i) == true);
+		}
+		else if (i < 0) {
+			assert(count == 2);
+			assert(b.search(i) == true);
+		}
+		else if (i < 10) {
+			assert(count == 3);
+			assert(b.search(i) == true);
+		}
+		else if (i < 20) {
+			assert(count == 2);
+			assert(b.search(i) == true);
+		}
+		else if (i < 100) {
+			assert(count == 1);
+			assert(b.search(i) == true);
+		}
+		else {
+			assert(count == 0);
+			assert(b.search(i) == false);
+		}
+	}
+
+	for (int i = 10000; i > -10000; i--) {
+		b.add(i);
+	}
+
+	assert(b.size() == 20240);
+	testIteratorSteps(b);
+}
+
+void testRemove() {
+	cout << "Test remove" << endl;
+	Bag b;
+	for (int i = -100; i < 100; i++) { 
+		assert(b.remove(i) == false);
+	}
+	assert(b.size() == 0);
+	for (int i = -100; i < 100; i = i + 2) { 
+		b.add(i);
+	}
+	for (int i = -100; i < 100; i++) {
+
+		if (i % 2 == 0) {
+			assert(b.remove(i) == true);
+		}
+		else {
+			assert(b.remove(i) == false);
+		}
+	}
+	testIteratorSteps(b);
+	assert(b.size() == 0);
+	for (int i = -100; i <= 100; i = i + 2) { 
+		b.add(i);
+	}
+	for (int i = 100; i > -100; i--) { 
+		if (i % 2 == 0) {
+			assert(b.remove(i) == true);
+		}
+		else {
+			assert(b.remove(i) == false);
+		}
+	}
+	testIteratorSteps(b);
+	assert(b.size() == 1);
+	b.remove(-100);
+	for (int i = -100; i < 100; i++) { 
+		b.add(i);
+		b.add(i);
+		b.add(i);
+		b.add(i);
+		b.add(i);
+	}
+	assert(b.size() == 1000);
+	for (int i = -100; i < 100; i++) {
+		assert(b.nrOccurrences(i) == 5);
+	}
+	for (int i = -100; i < 100; i++) { 
+		assert(b.remove(i) == true);
+	}
+	assert(b.size() == 800);
+	for (int i = -100; i < 100; i++) {
+		assert(b.nrOccurrences(i) == 4);
+	}
+	for (int i = -200; i < 200; i++) { 
+		if (i < -100 || i >= 100) {
+			assert(b.remove(i) == false);
+			assert(b.remove(i) == false);
+			assert(b.remove(i) == false);
+			assert(b.remove(i) == false);
+			assert(b.remove(i) == false);
+		}
+		else {
+			assert(b.remove(i) == true);
+			assert(b.remove(i) == true);
+			assert(b.remove(i) == true);
+			assert(b.remove(i) == true);
+			assert(b.remove(i) == false);
+		}
+	}
+	assert(b.size() == 0);
+	for (int i = -1000; i < 1000; i++) {
+		assert(b.nrOccurrences(i) == 0);
+	}
+	int min = -200;
+	int max = 200;
+	while (min < max) { 
+		b.add(min);
+		b.add(max);
+		min++;
+		max--;
+	}
+	b.add(0);
+	b.add(0);
+	assert(b.size() == 402);
+	testIteratorSteps(b);
+	for (int i = -30; i < 30; i++) { 
+
+		assert(b.search(i) == true);
+		assert(b.remove(i) == true);
+		if (i != 0) {
+			assert(b.search(i) == false);
+		}
+		else {
+			assert(b.search(i) == true);
+		}
+	}
+	assert(b.size() == 342);
+
+}
+
+void testIterator() { 
+	cout << "Test iterator" << endl;
+	Bag b;
+	BagIterator it = b.iterator(); 
+	assert(it.valid() == false);
 	try {
 		it.next();
 		assert(false);
 	}
 	catch (exception&) {
-		assert(true);
+		assert (true);
 	}
 	try {
 		it.getCurrent();
@@ -68,259 +217,158 @@ void testCreate() {
 		assert(true);
 	}
 
-	for (int i = 0; i < 10; i++) {
-		assert(sm.search(i) == NULL_TVALUE);
+	for (int i = 0; i < 100; i++) {  
+		b.add(33);
 	}
-
-	for (int i = -10; i < 10; i++) {
-		assert(sm.remove(i) == NULL_TVALUE);
+	BagIterator it2 = b.iterator(); 
+	assert(it2.valid() == true);
+	for (int i = 0; i < 100; i++) {
+		TElem elem = it2.getCurrent();
+		assert(elem == 33);
+		it2.next();
 	}
-}
-
-void testSearch(Relation r) {
-	cout << "Test search" << endl;
-	SortedMap sm(r);
-	int cMin = 0;
-	int cMax = 10;
+	assert(it2.valid() == false);
+	it2.first(); 
+	assert(it2.valid() == true);
+	for (int i = 0; i < 100; i++) {
+		TElem elem = it2.getCurrent();
+		TElem elem2 = it2.getCurrent();
+		assert(elem == 33);
+		assert(elem2 == 33);
+		it2.next();
+	}
+	assert(it2.valid() == false);
 	try {
-		for (int i = cMin; i <= cMax; i++) {
-			sm.add(i, i + 1);
-		}
-		assert(true);
-	} catch (exception&) {
+		it2.next();
 		assert(false);
 	}
-	int intervalDim = 10;
-	for (int i = cMin; i <= cMax; i++) {
-		assert(sm.search(i) == i + 1);
+	catch (exception&) {
+		assert(true);
 	}
-	testIteratorSteps(sm, r);
-	for (int i = cMin - intervalDim; i < cMin; i++) {
-		assert(sm.search(i) == NULL_TVALUE);
+	try {
+		it2.getCurrent();
+		assert(false);
 	}
-	for (int i = cMax + 1; i < cMax + intervalDim; i++) {
-		assert(sm.search(i) == NULL_TVALUE);
-	}
-}
-
-void testSearch() {
-	testSearch(increasing);
-	testSearch(decreasing);
-}
-
-vector<int> keysInRandomOrder(int cMin, int cMax) {
-	vector<int> keys;
-	for (int c = cMin; c <= cMax; c++) {
-		keys.push_back(c);
-	}
-	int n = keys.size();
-	for (int i = 0; i < n - 1; i++) {
-		int j = i + rand() % (n - i);
-		swap(keys[i], keys[j]);
-	}
-	return keys;
-}
-
-void populateSMEmpty(SortedMap& sm, int cMin, int cMax) {
-	vector<int> keys = keysInRandomOrder(cMin, cMax);
-	int n = keys.size();
-	for (int i = 0; i < n; i++) {
-		assert(sm.add(keys[i], keys[i]) == NULL_TVALUE);
-	}
-}
-
-void rePopulateSMShift(SortedMap& sm, int cMin, int cMax, int shift) {
-	vector<int> keys = keysInRandomOrder(cMin, cMax);
-	int n = keys.size();
-	for (int i = 0; i < n; i++) {
-		assert(sm.add(keys[i], keys[i] - shift) == keys[i]);
-	}
-}
-
-void populateSMShift(SortedMap& sm, int cMin, int cMax, int shift) {
-	vector<int> keys = keysInRandomOrder(cMin, cMax);
-	int n = keys.size();
-	for (int i = 0; i < n; i++) {
-		sm.add(keys[i], keys[i] - shift);
-	}
-}
-
-void testAddAndSearch(Relation r) {
-	cout << "Test add and search" << endl;
-	SortedMap sm(r);
-	int cMin = 100;
-	int cMax = 200;
-
-	populateSMEmpty(sm, cMin, cMax);
-	testIteratorSteps(sm, r);
-	for (int c = cMin; c <= cMax; c++) {
-		assert(sm.search(c) == c);
-	}
-	assert(sm.size() == (cMax - cMin + 1));
-
-	rePopulateSMShift(sm, cMin, cMax, 1);
-	assert(sm.size() == (cMax - cMin + 1));
-	testIteratorSteps(sm, r);
-	populateSMShift(sm, 2 * cMax, 3 * cMax, 2 * cMax - cMin);
-	for (int c = 2 * cMax; c <= 3 * cMax; c++) {
-		assert(sm.search(c) == c - 2 * cMax + cMin);
-	}
-	testIteratorSteps(sm, r);
-	assert(sm.size() == (cMax - cMin + 1) + (cMax + 1));
-
-	SMIterator it = sm.iterator();
-	it.first();
-	if (it.valid()) {
-		TKey cPrec = it.getCurrent().first;
-		assert(sm.search(cPrec) != NULL_TVALUE);
-		it.next();
-		while (it.valid()) {
-			TKey c = it.getCurrent().first;
-			assert(r(cPrec, c));
-			assert(sm.search(c) != NULL_TVALUE);
-			cPrec = c;
-			it.next();
-		}
+	catch (exception&) {
+		assert(true);
 	}
 
-}
 
-void testAdd() {
-	testAddAndSearch(increasing);
-	testAddAndSearch(decreasing);
-}
-
-void testRemoveAndSearch(Relation r) {
-	cout << "Test remove and search" << endl;
-	SortedMap sm(r);
-	int cMin = 10;
-	int cMax = 20;
-	populateSMEmpty(sm, cMin, cMax);
-	testIteratorSteps(sm, r);
-	for (int c = cMax + 1; c <= 2 * cMax; c++) {
-		assert(sm.remove(c) == NULL_TVALUE);
-		testIteratorSteps(sm, r);
+	Bag b2;
+	for (int i = -100; i < 100; i++) { 
+		b2.add(i);
+		b2.add(i);
+		b2.add(i);
 	}
-	int dim = cMax - cMin + 1;
-	assert(sm.size() == dim);
-	for (int c = cMin; c <= cMax; c++) {
-		assert(sm.remove(c) == c);
-		assert(sm.search(c) == NULL_TVALUE);
-
-		SMIterator it = sm.iterator();
-		it.first();
-		if (it.valid()) {
-			TKey cPrec = it.getCurrent().first;
-			it.next();
-			while (it.valid()) {
-				TKey c = it.getCurrent().first;
-				assert(r(cPrec, c));
-				cPrec = c;
-				it.next();
-			}
-		}
-
-		dim--;
-		assert(sm.size() == dim);
-
+	BagIterator it3 = b2.iterator();
+	assert(it3.valid() == true); 
+	for (int i = 0; i < 600; i++) {
+		TElem e1 = it3.getCurrent();
+		it3.next();
 	}
-
-	for (int c = cMin; c <= cMax; c++) {
-		assert(sm.remove(c) == NULL_TVALUE);
+	assert(it3.valid() == false);
+	it3.first();
+	assert(it3.valid() == true);
+	Bag b3;
+	for (int i = 0; i < 200; i = i + 4) { 
+		b3.add(i);
 	}
-	assert(sm.isEmpty());
-	assert(sm.size() == 0);
-
-}
-
-void testRemove() {
-	testRemoveAndSearch(increasing);
-	testRemoveAndSearch(decreasing);
-}
-
-void testIterator(Relation r) {
-	cout << "Test iterator" << endl;
-	SortedMap sm(r);
-	SMIterator it = sm.iterator();
-	assert(!it.valid());
-	it.first();
-	assert(!it.valid());
-	int cMin = 100;
-	int cMax = 300;
-	vector<int> keys = keysInRandomOrder(cMin, cMax);
-	int n = keys.size();
-	for (int i = 0; i < n; i++) {
-		assert(sm.add(keys[i], keys[n - i - 1]) == NULL_TVALUE);
+	BagIterator it4 = b3.iterator();
+	assert(it4.valid() == true);
+	int count = 0;
+	while (it4.valid()) { 
+		TElem e = it4.getCurrent();
+		assert(e % 4 == 0);
+		it4.next();
+		count++;
+	}
+	assert(count == 50);
+	Bag b4; 
+	for (int i = 0; i < 100; i++) {
+		b4.add(i);
+		b4.add(i * (-2));
+		b4.add(i * 2);
+		b4.add(i / 2);
+		b4.add(i / (-2));
+	}
+	vector<TElem> elements;
+	BagIterator it5 = b4.iterator();
+	while (it5.valid()) {
+		TElem e = it5.getCurrent();
+		elements.push_back(e);
+		it5.next();
 	}
 
-	SMIterator itSM = sm.iterator();
-	assert(itSM.valid());
-	itSM.first();
-	assert(itSM.valid());
-
-	TKey cPrec = itSM.getCurrent().first;
-	for (int i=1; i<100; i++){
-		assert(cPrec == itSM.getCurrent().first);
+	assert(elements.size() == b4.size());
+	for (unsigned int i = 0; i < elements.size(); i++) { 
+		TElem lastElem = elements.at(elements.size() - i - 1);
+		assert(b4.search(lastElem) == true);
+		b4.remove(lastElem);
 	}
-    itSM.next();
-	while (itSM.valid()) {
-		TKey c = itSM.getCurrent().first;
-		assert(cMin <= c && c <= cMax);
-		assert(sm.search(c) != NULL_TVALUE);
-		assert(r(cPrec, c));
-		cPrec = c;
-		itSM.next();
+
+	Bag b5;
+	for (int i = 0; i < 100; i++) {
+		b5.add(i);
+		b5.add(i * (-2));
+		b5.add(i * 2);
+		b5.add(i / 2);
+		b5.add(i / (-2));
+	}	
+	vector<TElem> elements2;
+	BagIterator it6 = b5.iterator();
+	while (it6.valid()) {
+		TElem e = it6.getCurrent();
+		elements2.push_back(e);
+		it6.next();
+	}
+
+	assert(elements2.size() == b5.size());
+	for (unsigned int i = 0; i < elements2.size(); i++) { 
+		TElem firstElem = elements2.at(i);
+		assert(b5.search(firstElem) == true);
+		b5.remove(firstElem);
 	}
 }
 
-void testQuantity(){
+void testQuantity() {
 	cout << "Test quantity" << endl;
-	SortedMap sm(increasing);
-	int cMin = -3000;
-	int cMax = 3000;
-	vector<int> keys  = keysInRandomOrder(cMin, cMax);
-    populateSMEmpty(sm, cMin, cMax);
-    for (int c = cMin; c <= cMax; c++){
-      	assert(sm.search(c) == c);
-    }
-	testIteratorSteps(sm, increasing);
-    assert(sm.size() == cMax - cMin + 1);
-    SMIterator it  = sm.iterator();
-    assert(it.valid());
-    it.first();
-    assert(it.valid());
-    for (int i = 0; i < sm.size(); i++) {
-    	it.next();
-    }
-    assert(!it.valid());
-    it.first();
-    while (it.valid()){
-    	TKey c = it.getCurrent().first;
-    	assert(sm.search(c) == c);
-        TValue v  = it.getCurrent().second;
-        assert(c == v);
-        it.next();
-    }
-    assert(!it.valid());
-    for (int c = cMin-100; c <= cMax+100; c++){
-         sm.remove(c);
-         assert(sm.search(c) == NULL_TVALUE);	
-		 testIteratorSteps(sm, increasing);
-    }
-    assert(sm.size() == 0);
-    assert(sm.isEmpty());
+	Bag b;
+	for (int i = 10; i >= 1; i--) {
+		for (int j = -30000; j < 30000; j = j + i) {
+			b.add(j);
+		}
+	}
+	assert(b.size() == 175739);
+	testIteratorSteps(b);
+	assert(b.nrOccurrences(-30000) == 10);
+	BagIterator it = b.iterator();
+	assert(it.valid() == true);
+	for (int i = 0; i < b.size(); i++) {
+		it.next();
+	}
+	it.first();
+	while (it.valid()) { 
+		TElem e = it.getCurrent();
+		assert(b.search(e) == true);
+		assert(b.nrOccurrences(e) > 0);
+		it.next();
+	}
+	assert(it.valid() == false);
+	for (int i = 0; i < 10; i++) { 
+		for (int j = 40000; j >= -40000; j--) {
+			b.remove(j);
+		}
+	}
+	assert(b.size() == 0);
 }
 
-void testIterator() {
-	testIterator(increasing);
-	testIterator(decreasing);
-}
 
 void testAllExtended() {
 	testCreate();
 	testAdd();
-	testSearch();
 	testRemove();
 	testIterator();
 	testQuantity();
+
+
 }

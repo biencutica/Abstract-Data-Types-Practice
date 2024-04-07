@@ -1,52 +1,54 @@
 #pragma once
+//DO NOT INCLUDE BAGITERATOR
 
 #include<utility>
 
-template<typename T>
-class BagIterator;
+//DO NOT CHANGE THIS PART
 
-typedef int TKey;
+#define MAX 1000000 //maximum number of locations in the table
 
-template<typename T>
+typedef int TElem;
+typedef std::pair<TElem, int> TPair;
+#define NULL_TELEM -1111111
+#define NULL_TPAIR std::pair<int, int>(NULL_TELEM, 0)
+
+class BagIterator; 
+
 class Bag {
+
 private:
+	int nr; //number of elements
+	int m; //number of locations in the hash table
+	TPair e[MAX]; //the array of elements - vector static
+	int next[MAX]; //the array of links
+	int firstEmpty; // the first empty position in the hash table
 
-	//capacity
-	int cp;
+	void updateFirstEmpty();
+	int h(TElem e); //the hash function
 
-	//size
-	int n;
-
-	//array of element
-	std::pair<TKey, T>* arr;
-
-	//for resizing the dynamic array
-	void resize();
-
+	friend class BagIterator;
 public:
 	//constructor
 	Bag();
 
 	//adds an element to the bag
-	void add(T e);
+	void add(TElem e);
 
-	//removes one occurrence of an element from a bag
+	//removes one occurence of an element from a bag
 	//returns true if an element was removed, false otherwise (if e was not part of the bag)
-	bool remove(T e);
+	bool remove(TElem e);
 
 	//checks if an element appears in the bag
-	bool search(T e) const;
+	bool search(TElem e) const;
 
 	//returns the number of occurrences for an element in the bag
-	int nrOccurrences(T e) const;
+	int nrOccurrences(TElem e) const;
 
 	//returns the number of elements from the bag
 	int size() const;
 
 	//returns an iterator for this bag
-	BagIterator<T> iterator() const;
-
-	void print() const;
+	BagIterator iterator() const;
 
 	//checks if the bag is empty
 	bool isEmpty() const;

@@ -2,69 +2,66 @@
 #include "BagIterator.h"
 #include "Bag.h"
 
-using namespace std;
-
-template<typename T>
-BagIterator<T>::BagIterator(const Bag<T>& c) : bag(c) //Initalizer
-{
-	// bc:theta(1)
-	// wc:theta(1)
-	// overall:theta(1)
-	occurence = 1;
-	current = 0;
+void BagIterator::move() {
+	//Best Case: theta(1) 
+	//Worst Case: theta(m) 
+	//Average Case: O(m)
+	while ((current < bag.m) && bag.e[current] == NULL_TPAIR)
+		current++;
 }
 
-template<typename T>
-void BagIterator<T>::first() { //Set current to be at the first element
-	// bc:theta(1)
-	// wc:theta(1)
-	// overall:theta(1)
-	occurence = 1;
+//constructor BagIterator
+BagIterator::BagIterator(const Bag& col) :
+		bag(col) {
 	current = 0;
+	index = 1;
+	move();
 }
 
-template<typename T>
-void BagIterator<T>::next() {
-	//bc:theta(n)
-	//wc:theta(n)
-	//overall:theta(n)
+void BagIterator::first() {
+	//Best Case: theta(1) 
+	//Worst Case: theta(1)  
+	//Average Case: theta(1)
 
-	//We move to the next element, if possible, else throws an exception
-	if (!valid()) {
-		throw exception();
+	current = 0;
+	index = 1;
+	move();
+}
+
+void BagIterator::next() {
+	//Best Case: theta(1) 
+	//Worst Case: theta(m)  
+	//Average Case: O(m)
+
+	if (!valid()){
+			throw std::exception();
+	}
+	if (index == bag.e[current].second) {
+		current++;
+		index = 1;
+		move();
 	}
 	else {
-		if (occurence == bag.arr[current].first) {
-			current++;
-			occurence = 1;
-		}
-		else
-			occurence++;
+		index++;
 	}
+
 }
 
-template<typename T>
-bool BagIterator<T>::valid() const {
-	//bc:theta(n)
-	//wc:theta(n)
-	//overall:theta(n)
+bool BagIterator::valid() const {
+	//Best Case: theta(1) 
+	//Worst Case: theta(1)  
+	//Average Case: theta(1)
 
-	//returns true if the current is still in the bag, false otherwise
-	return  (current < bag.n);
+	return (current < bag.m);
 }
 
+TElem BagIterator::getCurrent() const {
+	//Best Case: theta(1) 
+	//Worst Case: theta(1)  
+	//Average Case: theta(1)
 
-template<typename T>
-T BagIterator<T>::getCurrent() const
-{
-	//bc:theta(n)
-	//wc:theta(n)
-	//overall:theta(n)
-
-	if (!valid()) {
-		throw exception();
+	if (!valid()){
+			throw std::exception();
 	}
-	else {
-		return this->bag.arr[current].second;
-	}
+	return bag.e[current].first;
 }
